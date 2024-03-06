@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./game/Game";
 import "./index.css";
-import "./game";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<div></div>);
+root.render(<App />);
