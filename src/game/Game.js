@@ -47,7 +47,6 @@ const getGameData = async () => {
     })
     .then((res) => {
       let data = res.data;
-      console.log(data);
       if (data && data.success) {
         gameData.loaded = true;
         gameData.winScore = parseInt(data.data.game_configurations.score_needed);
