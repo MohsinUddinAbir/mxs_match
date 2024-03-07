@@ -5,7 +5,7 @@ export const showRewardAd = (callback = () => {}) => {
   let rewardPayload = null;
 
   googletag.cmd.push(() => {
-    rewardedSlot = googletag.defineOutOfPageSlot("/22639388115/Travel", "root");
+    rewardedSlot = googletag.defineOutOfPageSlot("/22639388115/rewarded_web_example", googletag.enums.OutOfPageFormat.REWARDED);
 
     // Slot returns null if the page or device does not support rewarded ads.
     if (rewardedSlot) {
