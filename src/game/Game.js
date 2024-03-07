@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import axios from "axios";
 import Match3 from "./Match3";
+import Swal from "sweetalert2";
 import { showRewardAd } from "./adsense";
 import "./game.css";
 
 const API_KEY = "4b744759-3fd0-bb23-dbe1-131d79f225af";
-const GAME_NAME = "game_web_maze";
+const GAME_NAME = "game_web_match";
 
 var gameData = {
   loaded: false,
@@ -46,10 +47,12 @@ const getGameData = async () => {
     })
     .then((res) => {
       let data = res.data;
+      console.log(data);
       if (data && data.success) {
         gameData.loaded = true;
-        gameData.gameTime = data.data.game_configurations.countdown_timer_seconds;
-        gameData.rewardCount = data.data.game_configurations.reward_on_complete;
+        gameData.winScore = parseInt(data.data.game_configurations.score_needed);
+        gameData.gameTime = parseInt(data.data.game_configurations.seconds_allowed);
+        gameData.rewardCount = parseInt(data.data.game_configurations.reward_on_complete);
       }
     })
     .catch((err) => {
@@ -75,7 +78,12 @@ const getUserData = async (code) => {
       return true;
     })
     .catch((err) => {
-      alert("Invalid user game code.");
+      Swal.fire({
+        title: "Error!",
+        text: "Invalid user game code.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
       console.log(err);
       return false;
     });
@@ -106,7 +114,12 @@ const saveUserData = () => {
     userDataBox.style.display = "none";
     checkUserData();
   } else {
-    alert("Please enter your user game code");
+    Swal.fire({
+      title: "Error!",
+      text: "Please enter your user game code",
+      icon: "error",
+      confirmButtonText: "OK",
+    });
   }
 };
 
@@ -118,12 +131,69 @@ userDataForm.addEventListener("submit", (e) => {
 getGameData();
 checkUserData();
 
+class OptionsScene extends Phaser.Scene {
+  soundOn = true;
+  gameMusic;
+  clickSound;
+  onOffSound;
+  constructor() {
+    super({
+      key: "OptionsScene",
+      active: true,
+    });
+  }
+
+  create() {
+    this.gameMusic = this.sound.add("game-music", { loop: true });
+    this.clickSound = this.sound.add("click-sound");
+    this.onOffSound = this.sound.add("onoff-sound");
+    this.gameMusic.play();
+
+    this.soundBtn = this.add
+      .image(this.scale.width - 50, 46, "sound-on")
+      .setScale(0.08)
+      .setDepth(4)
+      .setOrigin(1, 0)
+      .setInteractive({ cursor: "pointer" });
+
+    this.soundBtn.on("pointerup", () => {
+      if (this.soundOn) {
+        this.soundOn = false;
+        this.onOffSound.play();
+        this.gameMusic.setVolume(0);
+        this.clickSound.setVolume(0);
+        this.soundBtn.setTexture("sound-off");
+      } else {
+        this.soundOn = true;
+        this.onOffSound.play();
+        this.gameMusic.setVolume(1);
+        this.clickSound.setVolume(1);
+        this.soundBtn.setTexture("sound-on");
+      }
+    });
+  }
+}
+
 class WelcomeScene extends Phaser.Scene {
   constructor() {
     super("WelcomeScene");
   }
   preload() {
+    this.load.image("retry_btn", "assets/sprites/retry_btn.png");
+    this.load.image("claim_btn", "assets/sprites/claim_btn.png");
+    this.load.image("play_btn", "assets/sprites/play_btn.png");
+    this.load.image("play_btn_click", "assets/sprites/play_btn_click.png");
     this.load.image("brand_logo", "assets/sprites/mxs_logo_stack_white.png");
+    this.load.image("sound-on", "assets/buttons/sound-on.png");
+    this.load.image("sound-off", "assets/buttons/sound-off.png");
+    this.load.spritesheet("gems", "assets/sprites/candies.png", {
+      frameWidth: gameOptions.gemSize,
+      frameHeight: gameOptions.gemSize,
+    });
+
+    this.load.audio("game-music", "assets/sounds/game-music.mp3");
+    this.load.audio("click-sound", "assets/sounds/click-sound.mp3");
+    this.load.audio("onoff-sound", "assets/sounds/onoff-sound.mp3");
   }
 
   create() {
@@ -163,6 +233,7 @@ class WelcomeScene extends Phaser.Scene {
             progressBox.destroy();
             this.time.removeEvent(timer);
             this.scene.start("StartScene");
+            this.game.scene.add("OptionsScene", new OptionsScene(), true);
           }
         } else {
           time += 0.01;
@@ -178,22 +249,31 @@ class StartScene extends Phaser.Scene {
   constructor() {
     super("StartScene");
   }
-  preload() {
-    this.load.image("play_btn", "assets/sprites/play_btn.png");
-    this.load.image("play_btn_click", "assets/sprites/play_btn_click.png");
-    this.load.image("brand_logo", "assets/sprites/mxs_logo_stack_white.png");
-  }
 
   create() {
+    this.optionScene = this.game.scene.getScene("OptionsScene");
     this.checking = false;
     this.add.image(this.scale.width / 2, 230, "brand_logo").setScale(0.1);
     this.add
-      .text(this.scale.width / 2, this.scale.height / 2, `You have to collect ${gameData.winScore} points in ${gameData.gameTime} seconds to win and get 1 GOLD.`, {
+      .text(
+        this.scale.width / 2,
+        this.scale.height / 2 + 20,
+        `You have to collect ${gameData.winScore} points in ${gameData.gameTime} seconds to win and get ${gameData.rewardCount} GOLD.`,
+        {
+          fontSize: 24,
+          align: "center",
+          lineSpacing: 8,
+        }
+      )
+      .setWordWrapWidth(500)
+      .setOrigin(0.5);
+
+    this.uidText = this.add
+      .text(this.scale.width / 2, this.scale.height / 2 - 80, `UID: ${userData.user_id}`, {
         fontSize: 24,
         align: "center",
         lineSpacing: 8,
       })
-      .setWordWrapWidth(500)
       .setOrigin(0.5);
 
     const playBtn = this.add
@@ -219,6 +299,7 @@ class StartScene extends Phaser.Scene {
   async startGame() {
     if (this.checking) return;
     this.checking = true;
+    this.optionScene.clickSound.play();
     let success = await checkUserData();
     if (success) {
       this.checking = false;
@@ -227,6 +308,10 @@ class StartScene extends Phaser.Scene {
     } else {
       this.checking = false;
     }
+  }
+
+  update() {
+    this.uidText.setText(`UID: ${userData.user_id}`);
   }
 }
 
@@ -239,14 +324,9 @@ class GameScene extends Phaser.Scene {
     this.scoreText = null;
     this.isGameOver = false;
   }
-  preload() {
-    this.load.spritesheet("gems", "assets/sprites/candies.png", {
-      frameWidth: gameOptions.gemSize,
-      frameHeight: gameOptions.gemSize,
-    });
-  }
 
   create() {
+    this.gameScene = this.game.scene.getScene("OptionsScene");
     this.match3 = new Match3({
       rows: 8,
       columns: 7,
@@ -267,9 +347,10 @@ class GameScene extends Phaser.Scene {
     });
 
     // Create time text
-    this.timeText = this.add.text(this.scale.width - 250, 50, "Time: " + this.timeLeft, {
+    this.timeText = this.add.text(this.scale.width / 2, 50, "Time: " + this.timeLeft, {
       fontSize: "40px",
       fill: "#fff",
+      align: "center",
     });
 
     this.timer = this.time.addEvent({
@@ -471,27 +552,24 @@ class WinScene extends Phaser.Scene {
     super("WinScene");
   }
 
-  preload() {
-    this.load.image("claim_btn", "assets/sprites/claim_btn.png");
-  }
-
   create() {
+    this.optionScene = this.game.scene.getScene("OptionsScene");
     this.claiming = false;
-    this.add
-      .text(this.scale.width / 2, this.scale.height / 2 - 180, "Congrets!\nYou've Win!", {
+    this.congretsText = this.add
+      .text(this.scale.width / 2, this.scale.height / 2 - 180, `Congrets!\nYou've Win!`, {
         fontSize: "54px",
         fill: "#fff",
         align: "center",
         fontWeight: "bold",
-        lineSpacing: 9,
+        lineSpacing: 10,
       })
       .setOrigin(0.5);
-
-    this.add
-      .text(this.scale.width / 2, this.scale.height / 2, "You got 1 GOLD", {
+    this.rewardText = this.add
+      .text(this.scale.width / 2, this.scale.height / 2, `You got ${gameData.rewardCount} GOLD`, {
         fontSize: "45px",
         fill: "#fff",
         align: "center",
+        lineSpacing: 10,
       })
       .setOrigin(0.5);
 
@@ -503,7 +581,10 @@ class WinScene extends Phaser.Scene {
     claimBtn.on("pointerup", () => {
       if (this.claiming) return;
       this.claiming = true;
+      this.optionScene.clickSound.play();
       claimBtn.setTint(0x999999);
+      claimBtn.disableInteractive();
+      this.rewardText.setText("Claiming,Please wait...");
       showRewardAd((value) => {
         console.log(value.message);
         if (value.success) {
@@ -542,16 +623,26 @@ class WinScene extends Phaser.Scene {
         }
       )
       .then((res) => {
-        console.log(res.data);
-        alert("You have successfully climed your reward!");
-        this.scene.stop();
-        this.scene.start("StartScene");
+        Swal.fire({
+          title: "Success!",
+          text: `Congratulations you have been awarded ${gameData.rewardCount} GOLD`,
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then((result) => {
+          this.scene.stop();
+          this.scene.start("StartScene");
+        });
       })
       .catch((err) => {
-        console.log(err);
-        alert("Sorry, we got a problem, please try again!");
-        this.scene.stop();
-        this.scene.start("StartScene");
+        Swal.fire({
+          title: "Error!",
+          text: `Sorry, something went wrong!`,
+          icon: "error",
+          confirmButtonText: "OK",
+        }).then((result) => {
+          this.scene.stop();
+          this.scene.start("StartScene");
+        });
       });
   }
 }
@@ -561,11 +652,8 @@ class LoseScene extends Phaser.Scene {
     super("LoseScene");
   }
 
-  preload() {
-    this.load.image("retry_btn", "assets/sprites/retry_btn.png");
-  }
-
   create() {
+    this.optionScene = this.game.scene.getScene("OptionsScene");
     this.add
       .text(this.scale.width / 2, this.scale.height / 2 - 180, "Game Over!\nYou've lost!", {
         fontSize: "54px",
@@ -590,6 +678,7 @@ class LoseScene extends Phaser.Scene {
       .setInteractive({ cursor: "pointer" });
 
     tryAgainBtn.on("pointerup", () => {
+      this.optionScene.clickSound.play();
       this.scene.stop();
       this.scene.start("GameScene");
     });

@@ -17,7 +17,7 @@ export const showRewardAd = (callback = () => {}) => {
 
       const slotRenderEnded = (event) => {
         if (event.slot === rewardedSlot && event.isEmpty) {
-          callback({ success: false, message: "No ad returned for rewarded ad slot." });
+          callback({ success: true, message: "No ad returned for rewarded ad slot." });
         }
       };
 
@@ -49,7 +49,7 @@ export const showRewardAd = (callback = () => {}) => {
       googletag.enableServices();
       googletag.display(rewardedSlot);
     } else {
-      callback({ success: false, message: "Rewarded ads are not supported on this page." });
+      callback({ success: true, message: "Rewarded ads are not supported on this page." });
     }
   });
 };
