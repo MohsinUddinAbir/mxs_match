@@ -22,7 +22,7 @@ class WinScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.rewardText = this.add
       .text(this.scale.width / 2, this.scale.height / 2, `You got ${gameData.rewardCount} GOLD`, {
-        fontSize: "45px",
+        fontSize: "35px",
         fill: "#fff",
         align: "center",
         lineSpacing: 10,
@@ -40,7 +40,7 @@ class WinScene extends Phaser.Scene {
       this.optionScene.clickSound.play();
       claimBtn.setTint(0x999999);
       claimBtn.disableInteractive();
-      this.rewardText.setText("Claiming,Please wait...");
+      this.rewardText.setText("Claiming\nPlease wait...");
       showRewardAd((value) => {
         console.log(value.message);
         if (value.success) {
