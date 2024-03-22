@@ -2,7 +2,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_KEY = "b35b0d15-d0ac-8157-2075-0d5417d35bbe";
-const GAME_NAME = "mxs_tetris";
+const GAME_NAME = "game_web_match";
 
 export const gameData = {
   loaded: false,

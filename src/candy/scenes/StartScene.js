@@ -56,14 +56,14 @@ class StartScene extends Phaser.Scene {
     if (this.checking) return;
     this.checking = true;
     this.optionScene.clickSound.play();
-    // let success = await checkUserData();
-    // if (success) {
-    this.checking = false;
-    this.scene.stop();
-    this.scene.start("GameScene");
-    // } else {
-    //   this.checking = false;
-    // }
+    let success = await checkUserData();
+    if (success) {
+      this.checking = false;
+      this.scene.stop();
+      this.scene.start("GameScene");
+    } else {
+      this.checking = false;
+    }
   }
 
   update() {
