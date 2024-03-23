@@ -1,1 +1,1 @@
-# MXS TETRIS
+# MXS GAMES
