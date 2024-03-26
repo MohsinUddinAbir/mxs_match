@@ -53,7 +53,7 @@ class WelcomeScene extends Phaser.Scene {
     let width = this.scale.width;
     let height = this.scale.height;
 
-    let pwidth = width - 400;
+    let pwidth = width - 200;
     let pheight = 10;
 
     let progressBox = this.add.graphics();

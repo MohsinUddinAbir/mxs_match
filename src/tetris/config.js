@@ -4,17 +4,17 @@ import Swal from "sweetalert2";
 const API_KEY = "b35b0d15-d0ac-8157-2075-0d5417d35bbe";
 const GAME_NAME = "game_web_match";
 
-export const gameData = {
+export var gameData = {
   loaded: false,
   gameTime: 60,
   winScore: 1000,
   rewardCount: 1,
 };
 
-export const userData = {
+export var userData = {
   loaded: false,
   user_id: "",
-  user_code: "0GZvsI",
+  user_code: "",
 };
 
 const userDataBox = document.getElementById("user_data_box");
@@ -32,7 +32,6 @@ const getGameData = async () => {
     })
     .then((res) => {
       let data = res.data;
-      console.log(data);
       if (data && data.success) {
         gameData.loaded = true;
         gameData.winScore = parseInt(data.data.game_configurations.score_needed);
@@ -45,44 +44,72 @@ const getGameData = async () => {
     });
 };
 
-const getUserData = async (code) => {
-  let success = await axios
-    .get("https://us-central1-prodmxs.cloudfunctions.net/getUserDataByCode", {
-      params: {
-        game_access_code: code,
-      },
-      headers: {
-        Authorization: API_KEY,
-      },
-    })
-    .then((res) => {
-      let data = res.data;
-      if (data && data.user_id) {
-        userData = { ...data, user_code: code, loaded: true };
-      }
-      return true;
-    })
-    .catch((err) => {
-      Swal.fire({
-        title: "Error!",
-        text: "Invalid user game code.",
-        icon: "error",
-        confirmButtonText: "OK",
+const getUserData = async (id, code) => {
+  if (!id || !code) return false;
+  let success = false;
+  if (id) {
+    success = await axios
+      .get("https://us-central1-prodmxs.cloudfunctions.net/getUserDataById", {
+        params: {
+          user_id: id,
+        },
+        headers: {
+          Authorization: API_KEY,
+        },
+      })
+      .then((res) => {
+        if (res.data.success) {
+          let user = res.data.user;
+          if (user && user.user_id) {
+            userData = { ...user, loaded: true };
+          }
+          return true;
+        } else {
+          return false;
+        }
       });
-      console.log(err);
-      return false;
+  } else {
+    success = await axios
+      .get("https://us-central1-prodmxs.cloudfunctions.net/getUserDataByCode", {
+        params: {
+          game_access_code: code,
+        },
+        headers: {
+          Authorization: API_KEY,
+        },
+      })
+      .then((res) => {
+        let user = res.data;
+        if (user && user.user_id) {
+          userData = { ...user, user_code: code, loaded: true };
+        }
+        return true;
+      })
+      .catch((err) => {
+        return false;
+      });
+  }
+  if (!success) {
+    Swal.fire({
+      title: "Error!",
+      text: "Invalid user game code.",
+      icon: "error",
+      confirmButtonText: "OK",
     });
+  }
   return success;
 };
 
 export const checkUserData = async () => {
   if (userData.loaded && userData.user_id) return true;
+  let user_id = localStorage.getItem("user_id");
   let user_code = localStorage.getItem("user_code");
-  if (user_code) {
-    let success = await getUserData(user_code);
+  if (user_id || user_code) {
+    let success = await getUserData(user_id, user_code);
     if (success) {
       return true;
     } else {
+      localStorage.removeItem("user_id");
       localStorage.removeItem("user_code");
       return false;
     }
@@ -125,9 +152,11 @@ export const claimReward = async () => {
 };
 
 const saveUserData = () => {
+  let user_id = document.getElementById("user_id");
   let user_code = document.getElementById("user_code");
-  if (user_code.value) {
-    localStorage.setItem("user_code", user_code.value);
+  if (user_id.value || user_code.value) {
+    if (user_id.value) localStorage.setItem("user_id", user_id.value);
+    if (user_code.value) localStorage.setItem("user_code", user_code.value);
     userDataBox.style.display = "none";
     checkUserData();
   } else {

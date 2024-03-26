@@ -1,7 +1,7 @@
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_KEY = "4b744759-3fd0-bb23-dbe1-131d79f225af";
+const API_KEY = "b35b0d15-d0ac-8157-2075-0d5417d35bbe";
 const GAME_NAME = "game_web_match";
 
 export const gameData = {

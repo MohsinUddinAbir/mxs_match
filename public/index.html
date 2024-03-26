@@ -41,10 +41,13 @@
       <div class="input-box">
         <section id="user_data_box" class="prompt" style="display: none">
           <h3>MXS TETRIS</h3>
-          <h4>Enter User Game Code</h4>
+          <h4>Enter User ID and Game Code</h4>
           <form id="user_data_form">
             <section>
-              <input id="user_code" name="user_code" type="text" required autofocus />
+              <input id="user_id" name="user_id" type="text" placeholder="User ID" required autofocus />
+            </section>
+            <section>
+              <input id="user_code" name="user_code" type="text" placeholder="Game Code" required />
             </section>
             <button type="submit">Enter</button>
           </form>
